@@ -29,7 +29,7 @@ class OptionType(enum.Enum):
     CALL = 1.0
     PUT = -1.0
 
-def GeneratePathsMerton(NoOfPaths,NoOfSteps,S0, T,xiP,muJ,sigmaJ,r,sigma):    
+def GeneratePathsMerton(NoOfPaths,NoOfSteps,S0, T,lambdaP,muJ,sigmaJ,r,sigma):    
 
     # Create empty matrices for Poisson process and for compensated Poisson process
 
@@ -44,7 +44,7 @@ def GeneratePathsMerton(NoOfPaths,NoOfSteps,S0, T,xiP,muJ,sigmaJ,r,sigma):
     # Expectation E(e^J) for J~N(muJ,sigmaJ^2)
 
     EeJ = np.exp(muJ + 0.5*sigmaJ*sigmaJ)
-    ZPois = np.random.poisson(xiP*dt,[NoOfPaths,NoOfSteps])
+    ZPois = np.random.poisson(lambdaP*dt,[NoOfPaths,NoOfSteps]) 
     Z = np.random.normal(0.0,1.0,[NoOfPaths,NoOfSteps])
     J = np.random.normal(muJ,sigmaJ,[NoOfPaths,NoOfSteps])
     for i in range(0,NoOfSteps):
@@ -56,7 +56,7 @@ def GeneratePathsMerton(NoOfPaths,NoOfSteps,S0, T,xiP,muJ,sigmaJ,r,sigma):
 
         # Making sure that samples from a normal have mean 0 and variance 1
 
-        X[:,i+1]  = X[:,i] + (r - xiP*(EeJ-1) - 0.5*sigma*sigma)*dt +sigma*np.sqrt(dt)* Z[:,i]\
+        X[:,i+1]  = X[:,i] + (r - lambdaP*(EeJ-1) - 0.5*sigma*sigma)*dt +sigma*np.sqrt(dt)* Z[:,i]\
                     + J[:,i] * ZPois[:,i]
         time[i+1] = time[i] +dt
         
@@ -121,7 +121,7 @@ def BS_Delta(CP,S_0,K,sigma,t,T,r):
 
 def run_bs_delta_hedge(CP, K, sigma, T, r, s0, time, S):
     """
-    Black–Scholes delta hedge with ``sigma`` (same as original Fig05_06 loop).
+    Black–Scholes delta hedge with ``sigma`` (fine-grid, higher-jump-intensity loop).
     Returns terminal-time PnL paths and time series for call value and delta.
     """
     NoOfPaths, n_nodes = S.shape
@@ -155,31 +155,31 @@ def run_bs_delta_hedge(CP, K, sigma, T, r, s0, time, S):
 
 def mainCalculation():
     NoOfPaths = 1000
-    NoOfSteps = 100
+    NoOfSteps = 2000
     T         = 1.0
     r         = 0.1
     sigma     = 0.2
-    xiP       = 1.0
+    lambdaP       = 3.0
     muJ       = 0.0
     sigmaJ    = 0.25
     s0        = 1.0
     K         = [0.95]
     CP        = OptionType.CALL
 
-    # Kou parameters (risk-neutral DE jumps); intensity aligned with Merton xiP for comparability
-    lam_kou = xiP
+    # Kou parameters (risk-neutral DE jumps); intensity aligned with Merton lambdaP for comparability
+    lam_kou = lambdaP
     p_kou = 0.5
     eta1_kou = 10.0
-    eta2_kou = 10.0
+    eta2_kou = 5.0
 
     path_id = 10
 
-    np.random.seed(42)
-    Paths_merton = GeneratePathsMerton(NoOfPaths,NoOfSteps,s0, T,xiP,muJ,sigmaJ,r,sigma)
+    np.random.seed(7)
+    Paths_merton = GeneratePathsMerton(NoOfPaths,NoOfSteps,s0, T,lambdaP,muJ,sigmaJ,r,sigma)
     time_m = Paths_merton["time"]
     S_m    = Paths_merton["S"]
 
-    np.random.seed(42)
+    np.random.seed(7)
     Paths_kou = GeneratePathsKou(
         NoOfPaths, NoOfSteps, s0, T, r, sigma, lam_kou, p_kou, eta1_kou, eta2_kou
     )
@@ -199,7 +199,7 @@ def mainCalculation():
     ax1.plot(time_m, PnL_m[path_id,:], label="Hedging PnL")
     ax1.set_title(
         "Merton jump–diffusion: Black–Scholes delta hedge "
-        f"({NoOfSteps} steps, {NoOfPaths} paths, path {path_id})"
+        f"({NoOfSteps} steps, {NoOfPaths} paths, path {path_id}; λ={lambdaP})"
     )
     ax1.set_ylabel("value")
     ax1.legend(loc="best")
@@ -220,16 +220,16 @@ def mainCalculation():
 
     plt.tight_layout()
 
-    # --- Histograms of terminal PnL
+    # --- Histograms of terminal PnL (original script used 200 bins)
 
     fig2, (axh1, axh2) = plt.subplots(1, 2, figsize=(11, 4))
 
-    axh1.hist(PnL_m[:,-1], bins=100, density=False, alpha=0.85)
+    axh1.hist(PnL_m[:,-1], bins=200, density=False, alpha=0.85)
     axh1.set_title("Terminal hedging PnL — Merton jump–diffusion")
     axh1.set_xlabel("PnL at T")
     axh1.grid(True)
 
-    axh2.hist(PnL_k[:,-1], bins=100, density=False, alpha=0.85, color="C1")
+    axh2.hist(PnL_k[:,-1], bins=200, density=False, alpha=0.85, color="C1")
     axh2.set_title("Terminal hedging PnL — Kou jump–diffusion")
     axh2.set_xlabel("PnL at T")
     axh2.grid(True)
