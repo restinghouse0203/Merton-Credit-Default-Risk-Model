@@ -1,7 +1,7 @@
 # Jump Diffusion Models for Structural Credit Risk
 
 (Stochastic Calculus project) comparing stochastic models for **structural credit risk** under Merton’s framework, with emphasis on **jump-diffusion** specifications versus simpler benchmarks.
-- Completed under ORIE 5610 — Stochastic Calculus, Cornell University.
+- Completed under ORIE 5610 — Stochastic Calculus II, Cornell University.
 
 ## Overview
 
