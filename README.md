@@ -1,104 +1,75 @@
-# Merton Credit Risk Model and Jump-Diffusion Extensions
+# Jump Diffusion Models for Structural Credit Risk
 
-A stochastic-calculus project on structural credit risk, centered on Merton’s model and extended with jump-diffusion frameworks for improved tail-risk and default-probability modeling.
+(Stochastic Calculus project) comparing stochastic models for **structural credit risk** under Merton’s framework, with emphasis on **jump-diffusion** specifications versus simpler benchmarks.
+- Completed under ORIE 5610 — Stochastic Calculus, Cornell University.
 
 ## Overview
 
-This repository studies corporate default risk under structural models where equity is modeled as a contingent claim on firm assets.  
-It compares:
+This project studies **jump-diffusion models** in a credit-risk setting. We compare **investment-grade (“safe”)** firms with **default-risky** names to evaluate how different stochastic-calculus models behave in theory and in empirical credit metrics.
 
-- Black–Scholes / Merton structural baseline
-- Merton jump-diffusion extension
-- Kou double-exponential jump-diffusion extension
-- (Optional benchmark) Heston volatility model components
+**Data sources**
 
-Main outputs include:
+- **[yfinance](https://pypi.org/project/yfinance/)** — equity prices and balance-sheet inputs used for Merton-style structural inputs.
+- **FRED / Treasury yields** — short risk-free rates (e.g., 3-month Treasury); local CSV snapshots are stored under `data/` (e.g., `US_treasury_yield3m.csv`, `risk_free_rate.csv`, SOFR and longer yields where applicable).
 
-- Distance to Default (DD)
-- Physical default probability (PD under P)
-- Risk-neutral default probability (PD under Q)
-- Cross-model empirical comparison tables and plots
+**Code acknowledgments**
 
-## Mathematical Context
+Some utilities and numerical experiments follow patterns from Lech A. Grzelak’s *Computational Finance* materials; see the book’s companion repository:  
+[QuantFinanceBook / PythonCodes](https://github.com/LechGrzelak/QuantFinanceBook/tree/master/PythonCodes).
 
-Under the classical Merton framework:
+## Main takeaways
 
-- Firm defaults at horizon \( T \) if \( A_T < D \) (asset value below debt face value)
-- Equity resembles a call option on assets
-- Debt resembles risk-free debt minus a put option
+- **Kou’s jump-diffusion model** produced the strongest **theoretical** behavior along the dimensions we studied (e.g., **volatility smile**, **heavy left tails**, **delta hedging** under jumps).
+- In **empirical** exercises, the gains over a simple benchmark were often **modest**: **Black–Scholes–Merton (BSM)** was frequently **adequate** for practical credit metrics such as **probability of default (PD)**, **credit spread**, and **credit valuation**, given the data and implementation choices used here.
+- The written report also discusses **limitations of Merton’s structural default framework**, including **unobserved asset value and volatility**, and **default drivers not captured in market or accounting data** (for example, risks revealed only through events such as regulatory or operational issues rather than prices alone).
 
-Jump extensions are included to capture discontinuities and heavy tails that continuous diffusions miss.
+## Repository layout
 
-## Repository Layout
-
-- `src/credit_risk/models/` — pricing model implementations
-- `src/credit_risk/structural/` — PD/DD structural default pipelines
-- `src/credit_risk/simulation/` — path generation and Monte Carlo utilities
-- `scripts/` — reproducible entry points for pipelines and figure generation
-- `notebooks/` — exploratory and presentation notebooks
-- `data/` — raw and processed inputs
-- `results/` — generated tables and figures
-- `tests/` — unit and smoke tests
-- `docs/slides/` — presentation slides and documentation artifacts
-
-## Data
-
-Expected inputs include:
-
-- Equity price history (e.g., AAPL, JPM, XOM, etc.)
-- Balance-sheet debt proxies
-- Risk-free rate series (e.g., 3M Treasury)
-
-Raw datasets live in `data/raw/`; transformed datasets are stored in `data/processed/`.
-
-## Installation
-TBA
-
-## Quick Start
-
-Run baseline Merton structural metrics:
-TBA
-
-Run Kou jump-based structural metrics:
-TBA
-
-Merge model outputs for comparison:
-TBA
-
-Outputs are written to:
-
-- `results/tables/`
-- `results/figures/`
-
-## Reproducibility
-
-1. Fix random seeds where simulation is used.
-2. Keep model parameter sets under version control (e.g., `src/credit_risk/calibration/params.py`).
-3. Regenerate all figures/tables via scripts, not manual notebook edits.
-
-## Testing
-
-```bash
-pytest -q
+```text
+project/
+├── README.md
+├── data/                    # Downloaded / cached inputs (prices, yields, balance sheets)
+├── results/
+│   └── tables/              # Exported CSV summaries (model comparisons, PD/DD tables)
+└── code/
+    ├── Process/             # Path simulation (GBM, jumps, Kou/Merton jump processes)
+    ├── Jump/                # Jump-model figures / IV effects (book-style experiments)
+    ├── heston/              # Heston/CIR helpers and discretization utilities
+    ├── Hedging/             # Delta hedging (BS and jump-augmented paths)
+    ├── pricing/             # Pricing, IV, cross-model comparison notebooks/scripts
+    └── metrics/             # Default metrics, ECL, pipelines per model
 ```
 
-Recommended tests include:
+Run notebooks from the `code/` subfolders they live in (or adjust paths) so imports resolve correctly.
 
-- pricing sanity checks against known limits
-- pipeline smoke tests on small ticker universes
-- consistency tests between CSV outputs and in-memory pipeline DataFrames
+## Report layout
 
-## Current Scope and Limitations
+The full write-up is organized as follows:
 
-- Asset value is proxied from market cap + debt conventions
-- Balance-sheet frequency limits asset observability
-- Risk-neutral jump calibration can be model-dependent
-- Multi-debt/coupon structures are only partially explored
+1. **Background and Motivation**
+2. **Merton’s Structural Default Risk Model**
+3. **Pricing Models**
+   1. Black–Scholes–Merton  
+   2. Heston  
+   3. Merton’s Jump Diffusion  
+   4. Kou’s Jump Diffusion  
+4. **Application to Finance**
+   1. Volatility Smile  
+   2. Delta Hedging  
+   3. Theoretical Pricing Comparison  
+   4. Implementation Note  
+5. **Empirical Results**
+   1. Credit Valuation  
+   2. Credit Spread  
+   3. Probability of Default  
+6. **Conclusion**
+7. **Appendix**
+8. **References**
 
-## References
+## Dependencies
 
-- Merton, R. C. (1974). On the Pricing of Corporate Debt
-- Merton, R. C. (1976). Option Pricing When Underlying Stock Returns Are Discontinuous
-- Kou, S. G. (2002). A Jump-Diffusion Model for Option Pricing
-- Lando, D. (2004). Credit Risk Modeling: Theory and Applications
-- Oosterlee, C. W., & Grzelak, L. A. (2019). Mathematical Modeling and Computation in Finance
+Python 3 with typical scientific stack (**NumPy**, **Pandas**, **Matplotlib**, etc.) and **`yfinance`**. Exact versions are not pinned in this repository; create a virtual environment and install packages as needed for your setup.
+
+## License and academic use
+
+If you reuse this work, cite the course/report appropriately and retain attribution to third-party code (e.g., Grzelak’s companion repository where adapted).
